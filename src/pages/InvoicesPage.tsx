@@ -69,7 +69,8 @@ export default function InvoicesPage() {
         </Button>
       </div>
 
-      <div className="mb-8 grid grid-cols-2 gap-x-8 gap-y-4 border-y border-border py-5 sm:grid-cols-3">
+      {/* Two stats only: an invoice count would just restate the filter tabs. */}
+      <div className="mb-8 grid grid-cols-2 gap-x-8 gap-y-4 border-y border-border py-5">
         <div>
           <p className="text-xs font-medium text-muted-foreground">Outstanding</p>
           <p className="mt-1 font-mono text-xl font-medium tabular-nums">{usd(outstanding)}</p>
@@ -77,10 +78,6 @@ export default function InvoicesPage() {
         <div>
           <p className="text-xs font-medium text-muted-foreground">Paid in {year}</p>
           <p className="mt-1 font-mono text-xl font-medium tabular-nums">{usd(paidThisYear)}</p>
-        </div>
-        <div className="max-sm:hidden">
-          <p className="text-xs font-medium text-muted-foreground">Invoices</p>
-          <p className="mt-1 font-mono text-xl font-medium tabular-nums">{counts.all}</p>
         </div>
       </div>
 

@@ -19,6 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
+import { cn } from "@/lib/utils";
 import { putResource, useResource } from "@/lib/use-resource";
 import { todayISO, usd } from "@/lib/format";
 
@@ -29,6 +30,12 @@ interface EditableItem {
 }
 
 const emptyItem: EditableItem = { title: "", description: "", amount: "" };
+
+/** Borderless until hovered or focused, so a filled row reads as text. */
+const ghostField =
+  "border-transparent bg-transparent shadow-none dark:bg-transparent hover:bg-secondary/40 focus-visible:bg-transparent";
+
+const columnLabel = "font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground";
 
 export default function InvoiceEditorPage() {
   const { id } = useParams();
@@ -256,7 +263,18 @@ export default function InvoiceEditorPage() {
         </Button>
       </div>
 
-      <div className="space-y-4">
+      {/* Mirrors the generated PDF: a rule, tracked column labels, then hairline
+          separated rows. Fields are borderless until hovered or focused so the
+          editor reads as the document rather than as a stack of boxes. */}
+      <div className="border-t border-foreground/25" />
+      <div className="hidden items-center gap-3 py-2 sm:flex">
+        <span className={cn(columnLabel, "flex-1")}>Description</span>
+        <span className={cn(columnLabel, "w-32 text-right")}>Amount</span>
+        <span className="w-8 shrink-0" />
+      </div>
+      <div className="border-b border-border" />
+
+      <div>
         <AnimatePresence initial={false}>
           {items.map((item, i) => (
             <motion.div
@@ -267,25 +285,27 @@ export default function InvoiceEditorPage() {
               transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
               className="overflow-hidden"
             >
-              <div className="rounded-lg border border-border bg-card p-4">
-                {/* Side by side on desktop; stacked on mobile, where a fixed-width
-                    amount column left the title unreadably narrow. */}
-                <div className="flex flex-col gap-2.5 sm:flex-row sm:gap-3">
-                  <div className="flex min-w-0 flex-1 flex-col gap-2.5">
-                    <Input
-                      placeholder="Title, e.g. Project name - initial payment (50%)"
-                      value={item.title}
-                      onChange={(e) => updateItem(i, { title: e.target.value })}
-                    />
-                    <Textarea
-                      placeholder="Description (optional, one line per row on the PDF)"
-                      value={item.description}
-                      rows={2}
-                      onChange={(e) => updateItem(i, { description: e.target.value })}
-                      className="resize-y text-sm"
-                    />
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2 sm:w-32 sm:flex-col sm:items-end">
+              <div className="flex flex-col gap-1 border-b border-border py-2.5 sm:flex-row sm:items-start sm:gap-3">
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <Input
+                    placeholder="Title, e.g. Project name - initial payment (50%)"
+                    value={item.title}
+                    onChange={(e) => updateItem(i, { title: e.target.value })}
+                    className={cn(ghostField, "font-medium")}
+                  />
+                  <Textarea
+                    placeholder="Description (optional, one line per row on the PDF)"
+                    value={item.description}
+                    rows={2}
+                    onChange={(e) => updateItem(i, { description: e.target.value })}
+                    className={cn(ghostField, "min-h-0 resize-none text-sm text-muted-foreground")}
+                  />
+                </div>
+                <div className="flex items-center gap-3 sm:contents">
+                  {/* The input sizes to its content so the $ stays next to the
+                      figure while the pair stays flush to the column edge. */}
+                  <div className="flex flex-1 items-center justify-end sm:w-32 sm:flex-none">
+                    <span className="font-mono text-sm text-muted-foreground">$</span>
                     <Input
                       placeholder="0.00"
                       inputMode="decimal"
@@ -295,13 +315,18 @@ export default function InvoiceEditorPage() {
                         const n = parseFloat(e.target.value);
                         updateItem(i, { amount: Number.isFinite(n) ? n.toFixed(2) : "" });
                       }}
-                      className="w-full text-right font-mono tabular-nums"
+                      className={cn(
+                        ghostField,
+                        "field-sizing-content w-auto min-w-16 px-1.5 text-right font-mono tabular-nums",
+                      )}
                     />
+                  </div>
+                  <div className="flex w-8 shrink-0 justify-end">
                     {items.length > 1 && (
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="size-8 shrink-0 text-muted-foreground hover:text-destructive"
+                        className="size-8 text-muted-foreground/60 hover:text-destructive"
                         onClick={() => setItems((prev) => prev.filter((_, j) => j !== i))}
                         aria-label="Remove line item"
                       >
@@ -316,9 +341,14 @@ export default function InvoiceEditorPage() {
         </AnimatePresence>
       </div>
 
-      <div className="mt-6 flex items-baseline justify-end gap-6 border-t border-border pt-4">
+      {/* Figure sits in the same column as the amounts above; the last row's
+          rule already closes the table, so no extra divider here. */}
+      <div className="mt-4 flex items-baseline justify-end gap-3">
         <span className="text-sm font-medium text-muted-foreground">Total</span>
-        <span className="font-mono text-2xl font-semibold tabular-nums">{usd(total)}</span>
+        <span className="w-32 pr-1.5 text-right font-mono text-2xl font-semibold tabular-nums">
+          {usd(total)}
+        </span>
+        <span className="w-8 shrink-0" />
       </div>
 
       {!isNew && (

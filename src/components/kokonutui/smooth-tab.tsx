@@ -45,7 +45,8 @@ export default function SmoothTab({ items, value, onChange, className }: SmoothT
     <div
       ref={containerRef}
       role="tablist"
-      className={cn("relative inline-flex items-center gap-1 rounded-lg border bg-card p-1", className)}
+      // No outer border: the sliding pill already delineates the group.
+      className={cn("relative inline-flex items-center gap-1 rounded-lg p-1", className)}
     >
       {dimensions.width > 0 && (
         <motion.div
