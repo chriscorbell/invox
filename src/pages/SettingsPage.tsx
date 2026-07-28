@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { ImagePlus, Trash2 } from "lucide-react";
+import { motion } from "motion/react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import type { Settings } from "../../shared/types";
+import { MAX_LOGO_BYTES, type Settings } from "../../shared/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +18,10 @@ function toLines(s: string): string[] {
     .filter(Boolean);
 }
 
+const LOGO_TYPES = ["image/png", "image/jpeg"];
+
 export default function SettingsPage() {
+  const fileInput = useRef<HTMLInputElement>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -40,6 +45,22 @@ export default function SettingsPage() {
     }
   }
 
+  function pickLogo(file: File | undefined) {
+    if (!file || !settings) return;
+    if (!LOGO_TYPES.includes(file.type)) {
+      toast.error("Logo must be a PNG or JPEG");
+      return;
+    }
+    if (file.size > MAX_LOGO_BYTES) {
+      toast.error(`Logo must be under ${Math.round(MAX_LOGO_BYTES / 1024)} KB`);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setSettings({ ...settings, logo: String(reader.result) });
+    reader.onerror = () => toast.error("Could not read that file");
+    reader.readAsDataURL(file);
+  }
+
   if (!settings) {
     return (
       <div className="space-y-4">
@@ -59,6 +80,61 @@ export default function SettingsPage() {
       </div>
 
       <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-2">
+          <Label>Logo</Label>
+          <div className="flex items-center gap-4">
+            {/* White, because that is what the logo will actually print on. */}
+            <div className="flex h-20 w-40 shrink-0 items-center justify-center rounded-md border border-border bg-white p-3">
+              {settings.logo ? (
+                <motion.img
+                  key={settings.logo.slice(-24)}
+                  initial={{ opacity: 0, scale: 0.97 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                  src={settings.logo}
+                  alt="Invoice logo"
+                  className="max-h-full max-w-full object-contain"
+                />
+              ) : (
+                <span className="text-xs text-zinc-400">No logo</span>
+              )}
+            </div>
+            <div className="flex flex-col items-start gap-2">
+              <input
+                ref={fileInput}
+                type="file"
+                accept={LOGO_TYPES.join(",")}
+                className="hidden"
+                onChange={(e) => {
+                  pickLogo(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
+              <Button variant="outline" size="sm" onClick={() => fileInput.current?.click()}>
+                <ImagePlus className="size-4" />
+                {settings.logo ? "Replace" : "Upload"}
+              </Button>
+              {settings.logo && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground hover:text-destructive"
+                  onClick={() => setSettings({ ...settings, logo: null })}
+                >
+                  <Trash2 className="size-4" />
+                  Remove
+                </Button>
+              )}
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            PNG or JPEG under {Math.round(MAX_LOGO_BYTES / 1024)} KB. Printed at the top left of the
+            invoice; transparent PNGs work best. Remember to save.
+          </p>
+        </div>
+
+        <Separator />
+
         <div className="flex flex-col gap-2">
           <Label htmlFor="from">From</Label>
           <Textarea

@@ -3,7 +3,12 @@ export interface Settings {
   achLines: string[];
   footerNotes: string[];
   filenamePrefix: string;
+  /** PNG or JPEG data URL shown at the top of the invoice, or null. */
+  logo: string | null;
 }
+
+/** Logos are inlined into the settings row, so keep them small. */
+export const MAX_LOGO_BYTES = 512 * 1024;
 
 export interface Client {
   id: number;
@@ -44,4 +49,5 @@ export const DEFAULT_SETTINGS: Settings = {
   achLines: [],
   footerNotes: ["Thank you for your business. Please reach out with any questions."],
   filenamePrefix: "CC-Invoice",
+  logo: null,
 };
