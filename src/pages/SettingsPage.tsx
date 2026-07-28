@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
+import { putResource, useResource } from "@/lib/use-resource";
 
 function toLines(s: string): string[] {
   return s
@@ -22,21 +23,22 @@ const LOGO_TYPES = ["image/png", "image/jpeg"];
 
 export default function SettingsPage() {
   const fileInput = useRef<HTMLInputElement>(null);
-  const [settings, setSettings] = useState<Settings | null>(null);
+  const { data: loaded, showSkeleton } = useResource("settings", api.settings.get);
+  // Seed synchronously from cache so a revisit paints without a skeleton frame.
+  const [settings, setSettings] = useState<Settings | null>(loaded ?? null);
   const [saving, setSaving] = useState(false);
 
+  // Adopt server state on load; edits afterwards stay local until saved.
   useEffect(() => {
-    api.settings
-      .get()
-      .then(setSettings)
-      .catch((e) => toast.error(e.message));
-  }, []);
+    if (loaded) setSettings(loaded);
+  }, [loaded]);
 
   async function save() {
     if (!settings) return;
     setSaving(true);
     try {
-      await api.settings.update(settings);
+      const saved = await api.settings.update(settings);
+      putResource("settings", saved);
       toast.success("Settings saved");
     } catch (e) {
       toast.error((e as Error).message);
@@ -62,6 +64,7 @@ export default function SettingsPage() {
   }
 
   if (!settings) {
+    if (!showSkeleton) return null;
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-40" />

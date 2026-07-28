@@ -1,31 +1,24 @@
 import { FileText, Plus } from "lucide-react";
 import { motion } from "motion/react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import type { Invoice, InvoiceStatus } from "../../shared/types";
+import type { InvoiceStatus } from "../../shared/types";
 import ActionSearchBar from "@/components/kokonutui/action-search-bar";
 import SmoothTab from "@/components/kokonutui/smooth-tab";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
+import { useResource } from "@/lib/use-resource";
 import { longDate, usd } from "@/lib/format";
 
 type Filter = "all" | InvoiceStatus;
 
 export default function InvoicesPage() {
-  const [invoices, setInvoices] = useState<Invoice[] | null>(null);
+  const { data: invoices, warm, showSkeleton } = useResource("invoices", api.invoices.list);
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
-
-  useEffect(() => {
-    api.invoices
-      .list()
-      .then(setInvoices)
-      .catch((e) => toast.error(e.message));
-  }, []);
 
   const filtered = useMemo(() => {
     if (!invoices) return [];
@@ -111,12 +104,14 @@ export default function InvoicesPage() {
         />
       </div>
 
-      {invoices === null ? (
-        <div className="space-y-2">
-          {[0, 1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-14 w-full" />
-          ))}
-        </div>
+      {invoices === undefined ? (
+        showSkeleton && (
+          <div className="space-y-2">
+            {[0, 1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-14 w-full" />
+            ))}
+          </div>
+        )
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-20 text-center">
           <FileText className="size-8 text-muted-foreground/50" />
@@ -134,7 +129,8 @@ export default function InvoicesPage() {
         </div>
       ) : (
         <motion.ul
-          initial="hidden"
+          // Only stagger in on a cold load; replaying it on every visit reads as a flash.
+          initial={warm ? false : "hidden"}
           animate="show"
           variants={{ show: { transition: { staggerChildren: 0.03 } } }}
           className="divide-y divide-border"

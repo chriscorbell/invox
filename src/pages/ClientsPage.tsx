@@ -1,6 +1,6 @@
 import { Pencil, Plus, Users } from "lucide-react";
 import { motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import type { Client, ClientInput } from "../../shared/types";
 import HoldButton from "@/components/kokonutui/hold-button";
@@ -17,24 +17,15 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
+import { useResource } from "@/lib/use-resource";
 
 const emptyForm: ClientInput = { name: "", slug: "", email: "", notes: "" };
 
 export default function ClientsPage() {
-  const [clients, setClients] = useState<Client[] | null>(null);
+  const { data: clients, warm, showSkeleton, reload } = useResource("clients", api.clients.list);
   const [editing, setEditing] = useState<Client | "new" | null>(null);
   const [form, setForm] = useState<ClientInput>(emptyForm);
   const [saving, setSaving] = useState(false);
-
-  const refresh = () =>
-    api.clients
-      .list()
-      .then(setClients)
-      .catch((e) => toast.error(e.message));
-
-  useEffect(() => {
-    void refresh();
-  }, []);
 
   function open(client: Client | "new") {
     setEditing(client);
@@ -56,7 +47,7 @@ export default function ClientsPage() {
         toast.success(`${form.name} saved`);
       }
       setEditing(null);
-      void refresh();
+      void reload();
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
@@ -69,7 +60,7 @@ export default function ClientsPage() {
       await api.clients.remove(client.id);
       toast.success(`${client.name} deleted`);
       setEditing(null);
-      void refresh();
+      void reload();
     } catch (e) {
       toast.error((e as Error).message);
     }
@@ -85,12 +76,14 @@ export default function ClientsPage() {
         </Button>
       </div>
 
-      {clients === null ? (
-        <div className="space-y-2">
-          {[0, 1, 2].map((i) => (
-            <Skeleton key={i} className="h-14 w-full" />
-          ))}
-        </div>
+      {clients === undefined ? (
+        showSkeleton && (
+          <div className="space-y-2">
+            {[0, 1, 2].map((i) => (
+              <Skeleton key={i} className="h-14 w-full" />
+            ))}
+          </div>
+        )
       ) : clients.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-20 text-center">
           <Users className="size-8 text-muted-foreground/50" />
@@ -102,7 +95,7 @@ export default function ClientsPage() {
         </div>
       ) : (
         <motion.ul
-          initial="hidden"
+          initial={warm ? false : "hidden"}
           animate="show"
           variants={{ show: { transition: { staggerChildren: 0.03 } } }}
           className="divide-y divide-border"

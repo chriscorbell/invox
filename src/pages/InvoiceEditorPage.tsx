@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
-import type { Client, InvoiceInput, InvoiceStatus, LineItem } from "../../shared/types";
+import type { InvoiceInput, InvoiceStatus, LineItem } from "../../shared/types";
 import HoldButton from "@/components/kokonutui/hold-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
+import { putResource, useResource } from "@/lib/use-resource";
 import { todayISO, usd } from "@/lib/format";
 
 interface EditableItem {
@@ -34,7 +35,7 @@ export default function InvoiceEditorPage() {
   const isNew = id === undefined;
   const navigate = useNavigate();
 
-  const [clients, setClients] = useState<Client[] | null>(null);
+  const { data: clients } = useResource("clients", api.clients.list);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
 
@@ -45,10 +46,6 @@ export default function InvoiceEditorPage() {
   const [items, setItems] = useState<EditableItem[]>([{ ...emptyItem }]);
 
   useEffect(() => {
-    api.clients
-      .list()
-      .then(setClients)
-      .catch((e) => toast.error(e.message));
     if (isNew) {
       api.invoices
         .nextNumber()
@@ -103,6 +100,11 @@ export default function InvoiceEditorPage() {
     return { number: number.trim(), date, clientId, status, items: lineItems };
   }
 
+  /** Refresh the cached list so navigating back shows the change immediately. */
+  function syncInvoicesCache() {
+    void api.invoices.list().then((list) => putResource("invoices", list));
+  }
+
   async function save(): Promise<number | null> {
     const input = toInput();
     if (!input) return null;
@@ -110,11 +112,13 @@ export default function InvoiceEditorPage() {
     try {
       if (isNew) {
         const created = await api.invoices.create(input);
+        syncInvoicesCache();
         toast.success(`Invoice ${created.number} created`);
         navigate(`/invoices/${created.id}`, { replace: true });
         return created.id;
       }
       const updated = await api.invoices.update(Number(id), input);
+      syncInvoicesCache();
       toast.success(`Invoice ${updated.number} saved`);
       return updated.id;
     } catch (e) {
@@ -146,6 +150,7 @@ export default function InvoiceEditorPage() {
   async function remove() {
     try {
       await api.invoices.remove(Number(id));
+      syncInvoicesCache();
       toast.success("Invoice deleted");
       navigate("/");
     } catch (e) {
@@ -153,7 +158,7 @@ export default function InvoiceEditorPage() {
     }
   }
 
-  if (loading || clients === null) {
+  if (loading || clients === undefined) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-8 w-48" />
