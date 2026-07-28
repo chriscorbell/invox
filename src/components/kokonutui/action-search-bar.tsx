@@ -98,7 +98,8 @@ export default function ActionSearchBar({ value, onChange, results, placeholder,
         {showResults && results.length > 0 && (
           <motion.div
             role="listbox"
-            className="absolute z-20 mt-1 w-full overflow-hidden rounded-md border bg-popover shadow-lg"
+            // Wider than the input: invoice numbers and client names must not wrap.
+            className="absolute right-0 z-20 mt-1 w-80 max-w-[calc(100vw-2rem)] min-w-full overflow-hidden rounded-md border bg-popover shadow-lg"
             variants={ANIMATION_VARIANTS.container}
             initial="hidden"
             animate="show"
@@ -121,14 +122,16 @@ export default function ActionSearchBar({ value, onChange, results, placeholder,
                   }}
                   onMouseEnter={() => setActiveIndex(i)}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-muted-foreground">{action.icon}</span>
-                    <span className="text-sm font-medium">{action.label}</span>
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <span className="shrink-0 text-muted-foreground">{action.icon}</span>
+                    <span className="shrink-0 font-mono text-sm font-medium">{action.label}</span>
                     {action.description && (
-                      <span className="text-xs text-muted-foreground">{action.description}</span>
+                      <span className="truncate text-xs text-muted-foreground">{action.description}</span>
                     )}
                   </div>
-                  {action.end && <span className="font-mono text-xs text-muted-foreground">{action.end}</span>}
+                  {action.end && (
+                    <span className="ml-3 shrink-0 font-mono text-xs text-muted-foreground">{action.end}</span>
+                  )}
                 </motion.li>
               ))}
             </motion.ul>

@@ -1,4 +1,4 @@
-import { FileText, Plus, User } from "lucide-react";
+import { FileText, Plus } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -149,20 +149,31 @@ export default function InvoicesPage() {
             >
               <Link
                 to={`/invoices/${invoice.id}`}
-                className="group flex items-center gap-4 px-2 py-3.5 transition-colors hover:bg-card"
+                className="group block px-2 py-3 transition-colors hover:bg-card"
               >
-                <span className="w-24 shrink-0 font-mono text-sm tabular-nums">{invoice.number}</span>
-                <span className="min-w-0 flex-1 truncate text-sm text-foreground">
-                  <User className="mr-1.5 inline size-3.5 text-muted-foreground" />
-                  {invoice.clientName}
-                </span>
-                <span className="shrink-0 text-sm text-muted-foreground max-sm:hidden">
-                  {longDate(invoice.date)}
-                </span>
-                <StatusBadge status={invoice.status} className="shrink-0" />
-                <span className="w-28 shrink-0 text-right font-mono text-sm font-medium tabular-nums">
-                  {usd(invoice.total)}
-                </span>
+                <div className="flex items-center gap-4">
+                  <span className="w-24 shrink-0 font-mono text-sm tabular-nums">{invoice.number}</span>
+                  <span className="hidden min-w-0 flex-1 truncate text-sm sm:block">
+                    {invoice.clientName}
+                  </span>
+                  <span className="hidden shrink-0 text-sm text-muted-foreground md:block">
+                    {longDate(invoice.date)}
+                  </span>
+                  <StatusBadge
+                    status={invoice.status}
+                    className="hidden w-14 shrink-0 justify-center sm:inline-flex"
+                  />
+                  <span className="ml-auto w-28 shrink-0 text-right font-mono text-sm font-medium tabular-nums sm:ml-0">
+                    {usd(invoice.total)}
+                  </span>
+                </div>
+                {/* Narrow screens cannot fit one row without crushing the client name. */}
+                <div className="mt-1.5 flex items-center gap-3 sm:hidden">
+                  <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
+                    {invoice.clientName}
+                  </span>
+                  <StatusBadge status={invoice.status} className="shrink-0" />
+                </div>
               </Link>
             </motion.li>
           ))}

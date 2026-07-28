@@ -36,6 +36,8 @@
 
 :root,
 .dark {
+  /* Makes native controls (date picker, scrollbars, autofill) render dark. */
+  color-scheme: dark;
   --radius: 0.625rem;
 
   --background: oklch(0.171 0.003 260);

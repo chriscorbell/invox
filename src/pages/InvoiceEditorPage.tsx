@@ -66,7 +66,7 @@ export default function InvoiceEditorPage() {
             inv.items.map((it) => ({
               title: it.title,
               description: it.description,
-              amount: it.amount === 0 ? "" : String(it.amount),
+              amount: it.amount === 0 ? "" : it.amount.toFixed(2),
             })),
           );
           setLoading(false);
@@ -263,7 +263,9 @@ export default function InvoiceEditorPage() {
               className="overflow-hidden"
             >
               <div className="rounded-lg border border-border bg-card p-4">
-                <div className="flex gap-3">
+                {/* Side by side on desktop; stacked on mobile, where a fixed-width
+                    amount column left the title unreadably narrow. */}
+                <div className="flex flex-col gap-2.5 sm:flex-row sm:gap-3">
                   <div className="flex min-w-0 flex-1 flex-col gap-2.5">
                     <Input
                       placeholder="Title, e.g. Project name - initial payment (50%)"
@@ -278,19 +280,23 @@ export default function InvoiceEditorPage() {
                       className="resize-y text-sm"
                     />
                   </div>
-                  <div className="flex w-32 shrink-0 flex-col items-end gap-2.5">
+                  <div className="flex shrink-0 items-center gap-2 sm:w-32 sm:flex-col sm:items-end">
                     <Input
                       placeholder="0.00"
                       inputMode="decimal"
                       value={item.amount}
                       onChange={(e) => updateItem(i, { amount: e.target.value })}
-                      className="text-right font-mono tabular-nums"
+                      onBlur={(e) => {
+                        const n = parseFloat(e.target.value);
+                        updateItem(i, { amount: Number.isFinite(n) ? n.toFixed(2) : "" });
+                      }}
+                      className="w-full text-right font-mono tabular-nums"
                     />
                     {items.length > 1 && (
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="size-8 text-muted-foreground hover:text-destructive"
+                        className="size-8 shrink-0 text-muted-foreground hover:text-destructive"
                         onClick={() => setItems((prev) => prev.filter((_, j) => j !== i))}
                         aria-label="Remove line item"
                       >

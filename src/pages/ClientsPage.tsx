@@ -114,22 +114,23 @@ export default function ClientsPage() {
                 hidden: { opacity: 0, y: 8 },
                 show: { opacity: 1, y: 0, transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] } },
               }}
-              className="group flex items-center gap-4 px-2 py-3.5"
             >
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{client.name}</p>
-                {client.email && <p className="truncate text-xs text-muted-foreground">{client.email}</p>}
-              </div>
-              <span className="font-mono text-xs text-muted-foreground">{client.slug}</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-8 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 max-md:opacity-100"
+              {/* The whole row opens the editor; a hover-only button gave no affordance. */}
+              <button
+                type="button"
                 onClick={() => open(client)}
                 aria-label={`Edit ${client.name}`}
+                className="group flex min-h-14 w-full items-center gap-4 rounded-md px-2 py-3 text-left transition-colors hover:bg-card"
               >
-                <Pencil className="size-4" />
-              </Button>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{client.name}</p>
+                  {client.email && (
+                    <p className="truncate text-xs text-muted-foreground">{client.email}</p>
+                  )}
+                </div>
+                <span className="shrink-0 font-mono text-xs text-muted-foreground">{client.slug}</span>
+                <Pencil className="size-4 shrink-0 text-muted-foreground/60 transition-colors group-hover:text-foreground" />
+              </button>
             </motion.li>
           ))}
         </motion.ul>

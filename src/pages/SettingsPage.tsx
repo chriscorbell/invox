@@ -71,7 +71,8 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="max-w-xl">
+    <div>
+      {/* Header spans the page like the other routes; only the fields are narrow. */}
       <div className="mb-8 flex items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
         <Button onClick={() => void save()} disabled={saving}>
@@ -79,7 +80,7 @@ export default function SettingsPage() {
         </Button>
       </div>
 
-      <div className="flex flex-col gap-6">
+      <div className="flex max-w-xl flex-col gap-6">
         <div className="flex flex-col gap-2">
           <Label>Logo</Label>
           <div className="flex items-center gap-4">
@@ -129,7 +130,7 @@ export default function SettingsPage() {
           </div>
           <p className="text-xs text-muted-foreground">
             PNG or JPEG under {Math.round(MAX_LOGO_BYTES / 1024)} KB. Printed at the top left of the
-            invoice; transparent PNGs work best. Remember to save.
+            invoice; transparent PNGs work best.
           </p>
         </div>
 
