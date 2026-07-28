@@ -64,6 +64,9 @@ body {
   font-feature-settings: "cv11";
 }
 
+/* Solid, not alpha-blended: transparency over the dark background muddied both
+   the highlight and the text. 4.8:1 against the selected text. */
 ::selection {
-  background: oklch(0.45 0.09 160 / 0.45);
+  background: oklch(0.52 0.13 160);
+  color: oklch(0.98 0.002 260);
 }

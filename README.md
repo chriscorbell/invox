@@ -1,6 +1,6 @@
 # invox
 
-Personal invoice generator. React + TypeScript frontend, Hono + SQLite API, PDF export that reproduces the original reportlab invoice layout via pdf-lib.
+Personal invoice generator. React + TypeScript frontend, Hono + SQLite API, PDF export via pdf-lib.
 
 ## Development
 
@@ -13,7 +13,7 @@ Data lands in `./data/invox.db` (`INVOX_DATA_DIR` overrides).
 
 ## Deployment
 
-CI builds and pushes `ghcr.io/chriscorbell/invox:latest` (plus a `sha-*` tag) on every green push to main. The `core` server runs the image via Docker Compose; Watchtower picks up new images automatically within a minute.
+CI builds and pushes `ghcr.io/chriscorbell/invox:latest` (plus a `sha-*` tag) on every green push to main.
 
 Rollback: pin the compose file to a previous `sha-*` tag, or re-run the publish job from an older commit.
 
