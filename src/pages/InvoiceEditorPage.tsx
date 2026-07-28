@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import type { InvoiceInput, InvoiceStatus, LineItem } from "../../shared/types";
+import { ClientDialog } from "@/components/client-dialog";
 import HoldButton from "@/components/kokonutui/hold-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,7 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -37,12 +39,16 @@ const ghostField =
 
 const columnLabel = "font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground";
 
+/** Sentinel value for the "New client…" row in the client select. */
+const NEW_CLIENT = "__new_client__";
+
 export default function InvoiceEditorPage() {
   const { id } = useParams();
   const isNew = id === undefined;
   const navigate = useNavigate();
 
-  const { data: clients } = useResource("clients", api.clients.list);
+  const { data: clients, reload: reloadClients } = useResource("clients", api.clients.list);
+  const [addingClient, setAddingClient] = useState(false);
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
 
@@ -209,9 +215,15 @@ export default function InvoiceEditorPage() {
         </div>
         <div className="flex flex-col gap-2">
           <Label>Client</Label>
+          {/* Controlled with "" rather than undefined: an undefined value lets
+              Radix track selection itself, which made the trigger display the
+              "New client…" sentinel after it was picked. */}
           <Select
-            value={clientId ? String(clientId) : undefined}
-            onValueChange={(v) => setClientId(Number(v))}
+            value={clientId ? String(clientId) : ""}
+            onValueChange={(v) => {
+              if (v === NEW_CLIENT) setAddingClient(true);
+              else setClientId(Number(v));
+            }}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select client" />
@@ -222,16 +234,14 @@ export default function InvoiceEditorPage() {
                   {c.name}
                 </SelectItem>
               ))}
+              {clients.length > 0 && <SelectSeparator />}
+              {/* Creating a client mid-invoice beats losing the draft to a detour. */}
+              <SelectItem value={NEW_CLIENT} className="text-muted-foreground">
+                <Plus className="size-3.5" />
+                New client…
+              </SelectItem>
             </SelectContent>
           </Select>
-          {clients.length === 0 && (
-            <p className="text-xs text-muted-foreground">
-              No clients yet.{" "}
-              <Link to="/clients" className="underline underline-offset-2">
-                Add one
-              </Link>
-            </p>
-          )}
         </div>
         <div className="flex flex-col gap-2">
           <Label>Status</Label>
@@ -356,6 +366,17 @@ export default function InvoiceEditorPage() {
           <HoldButton onConfirm={() => void remove()}>Hold to delete invoice</HoldButton>
         </div>
       )}
+
+      <ClientDialog
+        target={addingClient ? "new" : null}
+        onClose={() => setAddingClient(false)}
+        onSaved={async (client) => {
+          setAddingClient(false);
+          // Refresh before selecting, so the select has an option to match.
+          await reloadClients();
+          setClientId(client.id);
+        }}
+      />
     </motion.div>
   );
 }
